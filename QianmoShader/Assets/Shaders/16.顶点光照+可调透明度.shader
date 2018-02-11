@@ -1,21 +1,24 @@
-﻿Shader "浅墨Shader编程/Volume4/13.渲染对象背面v2/13.渲染对象背面v2"
+﻿Shader "浅墨Shader编程/Volume4/16.顶点光照+可调透明度"
 {
 	Properties
 	{
-		_Color("主颜色", Color) = (1, 1, 1, 1)
+		_Color("主颜色", Color) = (1, 1, 1, 0)
 		_SpecColor("高光颜色", Color) = (1, 1, 1, 1)
 		_Emission("光泽颜色", Color) = (0, 0, 0, 0)
 		_Shininess("光泽度", Range(0.01, 1)) = 0.7
-		_MainTex ("Texture", 2D) = "white" {}
+		_MainTex ("基础纹理（RGB）-透明度（A）", 2D) = "white" {}
+		_Cutoff("Alpha透明度阈值", Range(0, 1)) = 0.5
 	}
 
 	SubShader
 	{
 
-		//通道一：绘制对象的前面部分，使用简单的白色材质，并应用主纹理
 		Pass
 		{
-			//设置顶点光照
+			//使用Cutoff参数定义能被渲染的透明度阈值
+			AlphaTest Greater [_Cutoff]
+
+			//设置顶点光照参数值
 			Material
 			{
 				Diffuse[_Color]
@@ -27,21 +30,13 @@
 
 			//开启光照
 			Lighting On
-
-			//将顶点颜色混合纹理
-			SetTexture[_MainTex]
+		
+			//进行纹理混合
+			SetTexture[_MainText]
 			{
-				Combine Primary * Texture
+				combine texture * primary
 			}
 		}
-
-		//通道二：采用亮蓝色来渲染角色背面
-		Pass
-		{
-			Color(0, 0, 1, 1)
-			Cull Front
-		}
-
 
 
 
