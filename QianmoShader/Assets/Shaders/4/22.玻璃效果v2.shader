@@ -3,12 +3,12 @@
 	Properties
 	{
 		_Color ("Main Color", Color) = (1, 1, 1, 1)
-		_MainTex ("Texture", 2D) = "white" {}
-		_Reflection("Gloss", Cube) = "skybox"{ TexGen CubeReflect }
+		_MainTex ("Base (RGB) Transparency (A)", 2D) = "white" {}
+		_Reflection("Base (RGB) Gloss (A)", Cube) = "skybox"{ TexGen CubeReflect }
 	}
 	SubShader
 	{
-		Tags { "RenderType"="Transparent" }
+		Tags { "Queue"="Transparent" }
 
 		Pass
 		{
