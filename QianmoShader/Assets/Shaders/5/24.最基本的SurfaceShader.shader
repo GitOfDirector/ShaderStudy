@@ -17,7 +17,7 @@
 		};
 
 		//【3】表面着色函数的编写
-		void surf (Input IN, inout SurfaceOutputStandard o) 
+		void surf (Input IN, inout SurfaceOutput o) 
 		{
 			//反射率
 			o.Albedo = float3(0.5, 0.8, 0.3);
