@@ -1,4 +1,4 @@
-﻿Shader "Custom/37.自定义卡通渐变光照" 
+﻿Shader "浅墨Shader编程/Volume7/37.自定义卡通渐变光照" 
 {
 	Properties 
 	{
