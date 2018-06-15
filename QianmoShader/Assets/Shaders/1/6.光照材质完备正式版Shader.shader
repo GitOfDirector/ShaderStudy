@@ -1,4 +1,4 @@
-﻿Shader "Unlit/6.光照材质完备正式版Shader"
+﻿Shader "浅墨Shader编程/6.光照材质完备正式版Shader"
 {
 	Properties
 	{

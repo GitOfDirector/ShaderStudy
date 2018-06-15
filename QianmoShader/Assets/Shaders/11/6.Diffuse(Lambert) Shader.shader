@@ -4,7 +4,7 @@ Shader "浅墨Shader编程/Volume12/6.Diffuse(Lambert) Shader"
 {
 	Properties
 	{
-		_Color ("Main Color", 2D) = (1, 1, 1, 1)
+		_Color ("Main Color", Color) = (1, 1, 1, 1)
 	}
 
 	SubShader
@@ -14,7 +14,7 @@ Shader "浅墨Shader编程/Volume12/6.Diffuse(Lambert) Shader"
 		//设置光照模式
 		Tags { "LightingMode" = "ForwardBase" }
 		//细节层次
-		LOD 100
+		LOD 200
 
 		Pass
 		{
@@ -46,7 +46,7 @@ Shader "浅墨Shader编程/Volume12/6.Diffuse(Lambert) Shader"
 			{
 				v2f o;
 				o.position = UnityObjectToClipPos(v.vertex);
-				o.normal = mul(float4(input.normal, 0.0), unity_WorldToObject).xy;
+				o.normal = mul(float4(v.normal, 0.0), unity_WorldToObject).xyz;
 
 				return o;
 			}
@@ -54,18 +54,17 @@ Shader "浅墨Shader编程/Volume12/6.Diffuse(Lambert) Shader"
 			fixed4 frag (v2f i) : COLOR
 			{
 				//获取发现的方向
-				float3 normalDirection = normalize(input.normal);
+				float3 normalDir = normalize(i.normal);
 				//获取入射光线的值与方向
-				float3 lightDirection = normalize(_WorldSpaceLightPos0.xyz);
+				float3 lightDir = normalize(_WorldSpaceLightPos0.xyz);
 
 				//计算出漫反射颜色的值
 				//Diffuse = LightColor * MainColor * max(0, dot(N, L))
-				float3 diffuse = _LightColor0.rgb * _Color.rgb * max(0.0, dot(normalDirection, ligthDirection));
+				float3 diffuse = _LightColor0.rgb * _Color.rgb * max(0.0, dot(normalDir, lightDir));
 
 				//合并漫反射颜色值与环境光颜色值
 				float4 diffuseAmbient = float4(diffuse, 1.0) +UNITY_LIGHTMODEL_AMBIENT;
 
-				//将漫反射-环境光颜色值乘以纹理颜色
 				return diffuseAmbient;
 
 			}
