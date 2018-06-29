@@ -1,4 +1,6 @@
-﻿
+﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
+
 /*
 降采样（Downsample）也称下采样（Subsample），按字面意思理解即是降低采样频率。
 对于一幅N*M的图像来说，如果降采样系数为k,则降采样即是在原图中每行每列每隔k个点取一个点组成一幅图像的一个过程。
@@ -119,6 +121,23 @@ Shader "浅墨Shader编程/Volume15/RapidBlurEffect"
         half4(0.0855, 0.0855, 0.0855,0),  
         half4(0.0205, 0.0205, 0.0205,0)  
 	};
+
+	//顶点着色函数
+	VertexOutput_DownSmpl vert_DownSmpl(VertexInput v)
+	{
+		//实例化一个降采样输出结构
+		VertexOutput_DownSmpl o;
+
+		o.pos = UnityObjectToClipPos(v.vertex);
+		//对图像的降采样：取像素上下左右周围的点，分别存于四级纹理坐标中
+		o.uv2_0 = v.texcoord + _MainTex_TexelSize.xy * half2(0.5h, 0.5h);
+		o.uv2_1 = v.texcoord + _MainTex_TexelSize.xy * half2(-0.5h, -0.5h);
+		o.uv2_2 = v.texcoord + _MainTex_TexelSize.xy * half2(0.5h, -0.5h);
+		o.uv2_3 = v.texcoord + _MainTex_TexelSize.xy * half2(-0.5h, 0.5h);
+
+		return o;
+	}
+
 
 	ENDCG
 }
