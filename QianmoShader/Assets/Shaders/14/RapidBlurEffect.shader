@@ -1,5 +1,7 @@
 ﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
 
+// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
 
 /*
 降采样（Downsample）也称下采样（Subsample），按字面意思理解即是降低采样频率。
@@ -34,7 +36,7 @@ Shader "浅墨Shader编程/Volume15/RapidBlurEffect"
 			//指定此通道的顶点着色器为vert_DownSmpl
 			#pragma vertex vert_DownSmpl
 			//指定此通道的像素着色器为frag_DownSmpl
-			#pragma fargment frag_DownSmpl
+			#pragma fragment frag_DownSmpl
 
 			ENDCG
 
@@ -81,24 +83,24 @@ Shader "浅墨Shader编程/Volume15/RapidBlurEffect"
 	sampler2D _MainTex;
 
 	//UnityCG.cginc中的内置变量，纹理中的像素单位尺寸
-	uniform half4 _MainTex_TexelSIze;
+	uniform half4 _MainTex_TexelSize;
 	//C#脚本控制的变量
-	uniform half _SOwnSampleValue;
+	uniform half _DownSampleValue;
 
 	//顶点输入结构体
 	struct VertexInput
 	{
 		//顶点位置坐标
-		float1 vertex :POSITION;
+		float4 vertex :POSITION;
 		//一级纹理坐标
-		half2 texcoord : TEXCIIRD0;
+		half2 texcoord : TEXCOORD0;
 	};
 
 	//降采样输出结构体
 	struct VertexOutput_DownSmpl
 	{
 		//像素位置坐标
-		float4 pos : V_POSITION;
+		float4 pos : SV_POSITION;
 		//一级纹理坐标（右上）
 		half2 uv2_0 : TEXCOORD0;
 		//二级（左下）
@@ -113,13 +115,13 @@ Shader "浅墨Shader编程/Volume15/RapidBlurEffect"
 	//准备高斯模糊权重矩阵参数7*4的矩阵
 	static const half4 GaussWeight[7] = 
 	{
-		half4(0.0205, 0.0205, 0.0205,0),  
-        half4(0.0855, 0.0855, 0.0855,0),  
-        half4(0.232, 0.232, 0.232,0),  
-        half4(0.324, 0.324, 0.324,1),  
-        half4(0.232, 0.232, 0.232,0),  
-        half4(0.0855, 0.0855, 0.0855,0),  
-        half4(0.0205, 0.0205, 0.0205,0)  
+		half4(0.0205, 0.0205, 0.0205, 0),  
+        half4(0.0855, 0.0855, 0.0855, 0),  
+        half4(0.232, 0.232, 0.232, 0),  
+        half4(0.324, 0.324, 0.324, 1),  
+        half4(0.232, 0.232, 0.232, 0),  
+        half4(0.0855, 0.0855, 0.0855, 0),  
+        half4(0.0205, 0.0205, 0.0205, 0)  
 	};
 
 	//顶点着色函数
@@ -138,6 +140,90 @@ Shader "浅墨Shader编程/Volume15/RapidBlurEffect"
 		return o;
 	}
 
+	fixed4 frag_DownSmpl(VertexOutput_DownSmpl i) : SV_Target 
+	{
+		//定义一个临时的颜色值
+		//fixed4 color = (0, 0, 0, 0);
+		fixed4 color = (0);
+		
+		//四个相邻像素点处的纹理值相加
+		color += tex2D(_MainTex, i.uv2_0);
+		color += tex2D(_MainTex, i.uv2_1);
+		color += tex2D(_MainTex, i.uv2_2);
+		color += tex2D(_MainTex, i.uv2_3);
+
+		//返回最终颜色的平均值
+		return color / 4;
+	}
+
+	//顶点输入结构体
+	struct VertexOutput_Blur 
+	{
+		//像素坐标
+		float4 pos : SV_POSITION;
+
+		//一级纹理
+		half4 uv : TEXCOORD0;
+
+		//二级纹理
+		half2 offset : TEXCOORD1;
+	};
+
+	//顶点着色函数
+	VertexOutput_Blur vert_BlurHorizontal(VertexInput v) 
+	{
+		VertexOutput_Blur o;
+
+		//将三维空间中的坐标投影到二维窗口
+		o.pos = UnityObjectToClipPos(v.vertex);
+		//纹理坐标
+		o.uv = half4(v.texcoord.xy, 1, 1);
+		//计算X方向的偏移量
+		o.offset = _MainTex_TexelSize.xy *half2(1.0, 0.0) * _DownSampleValue;
+
+		return o;
+	}
+
+	//顶点着色函数
+	VertexOutput_Blur vert_BlurVertical(VertexInput v)
+	{
+		VertexOutput_Blur o;
+
+		//将三维空间中的坐标投影到二维窗口
+		o.pos = UnityObjectToClipPos(v.vertex);
+		//纹理坐标
+		o.uv = half4(v.texcoord.xy, 1, 1);
+		//计算Y方向的偏移量
+		o.offset = _MainTex_TexelSize.xy *half2(0.0, 1.0) * _DownSampleValue;
+
+		return o;
+	}
+
+	//片段着色函数
+	half4 frag_Blur(VertexOutput_Blur i) : SV_Target 
+	{
+		//获取原始的uv坐标
+		half2 uv = i.uv.xy;
+
+		//获取偏移量
+		half2 OffsetWidth = i.offset;
+		//从中心点偏移3个间隔，从最左或最上开始加权累加
+		half2 uv_withOffset = uv - OffsetWidth * 3.0;
+
+		//循环获取加权后的颜色值
+		half4 color = 0;
+		for (int j = 0; j < 7; j++)
+		{
+			//偏移后的像素纹理值
+			half4 texCol = tex2D(_MainTex, uv_withOffset);
+			//待输出颜色值 += 偏移后的像素纹理值 * 高斯权重
+			color += texCol * GaussWeight[j];
+			//移到下一个像素处，准备下一次循环加权
+			uv_withOffset += OffsetWidth;
+		}
+
+		return color;
+	}
 
 	ENDCG
 }
